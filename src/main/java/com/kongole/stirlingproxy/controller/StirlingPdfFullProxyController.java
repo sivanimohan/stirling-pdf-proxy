@@ -18,14 +18,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-// PDFBox Imports
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
-import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
-import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination;
-import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDNamedDestination;
-// Potentially other destination types if you encounter them often:
-// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitWidthDestination;
+// PDFBox Imports (these can now be removed if no other method uses them in this class)
+// import org.apache.pdfbox.pdmodel.PDDocument;
+// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
+// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
+// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination;
+// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDNamedDestination;
 
 
 @RestController
@@ -413,100 +411,6 @@ public class StirlingPdfFullProxyController {
             System.err.println("Unexpected internal server error in splitPdfByChaptersProxy: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Internal server error in proxy: " + e.getMessage()).getBytes());
-        }
-    }
-
-    // --- NEW ENDPOINT FOR PDF BOOKMARK EXTRACTION ---
-    @PostMapping(value = "/pdf-info/extract-bookmarks", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<BookmarkInfo>> getPdfBookmarks(
-            @RequestParam("pdfFile") MultipartFile file) { // Using "pdfFile" as the parameter name
-
-        List<BookmarkInfo> bookmarks = new ArrayList<>();
-        PDDocument document = null; // Initialize to null for finally block
-
-        try {
-            document = PDDocument.load(file.getInputStream());
-            PDDocumentOutline outline = document.getDocumentCatalog().getDocumentOutline();
-
-            if (outline != null) {
-                // Recursively process the outline items
-                processOutline(outline.getFirstChild(), bookmarks, document);
-            }
-
-            return ResponseEntity.ok(bookmarks);
-
-        } catch (IOException e) {
-            System.err.println("Error reading PDF file or during PDFBox processing: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Or return an error DTO
-        } catch (Exception e) {
-            // Catch any other unexpected exceptions
-            e.printStackTrace();
-            System.err.println("Unexpected internal server error during PDF bookmark extraction: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        } finally {
-            if (document != null) {
-                try {
-                    document.close();
-                } catch (IOException e) {
-                    System.err.println("Error closing PDF document: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    /**
-     * Helper method to recursively process PDOutlineItem and extract bookmark information.
-     * Converts 0-based PDFBox page index to 1-based page number.
-     * Handles different destination types to find the target page.
-     */
-    private void processOutline(PDOutlineItem item, List<BookmarkInfo> bookmarks, PDDocument document) throws IOException {
-        if (item == null) {
-            return;
-        }
-
-        int pageNumber = -1; // Default to -1 if page cannot be determined
-
-        // Determine the target page number
-        if (item.getDestination() instanceof PDPageDestination) {
-            PDPageDestination pageDest = (PDPageDestination) item.getDestination();
-            if (pageDest.getPage() != null) {
-                // Get 0-based page index from the PDPage object, then convert to 1-based
-                pageNumber = document.getPages().indexOf(pageDest.getPage()) + 1;
-            } else if (pageDest.getPageNumber() >= 0) {
-                // Fallback: If page object is null, but a 0-based page number is provided
-                pageNumber = pageDest.getPageNumber() + 1;
-            }
-        } else if (item.getDestination() instanceof PDNamedDestination) {
-            // Named destinations need to be resolved to a PDPageDestination
-            PDNamedDestination namedDest = (PDNamedDestination) item.getDestination();
-            PDPageDestination resolvedDest = document.getDocumentCatalog().findNamedDestinationPage(namedDest);
-            if (resolvedDest != null) {
-                if (resolvedDest.getPage() != null) {
-                    pageNumber = document.getPages().indexOf(resolvedDest.getPage()) + 1;
-                } else if (resolvedDest.getPageNumber() >= 0) {
-                    pageNumber = resolvedDest.getPageNumber() + 1;
-                }
-            }
-        }
-        // You can add more 'else if' blocks here for other PDDestination subtypes if needed
-        // e.g., PDPageFitWidthDestination, PDPageXYZDestination if you encounter issues
-        // For most common PDFs, PDPageDestination and PDNamedDestination cover the majority.
-
-
-        // Add the bookmark if a valid page number was found
-        if (pageNumber != -1) {
-            bookmarks.add(new BookmarkInfo(item.getTitle(), pageNumber));
-        } else {
-            // Log if a bookmark destination couldn't be resolved, for debugging
-            System.err.println("Could not resolve page number for bookmark: " + item.getTitle());
-        }
-
-
-        // Recursively process children (sub-bookmarks)
-        PDOutlineItem child = item.getFirstChild();
-        while (child != null) {
-            processOutline(child, bookmarks, document);
-            child = child.getNextSibling();
         }
     }
 }
