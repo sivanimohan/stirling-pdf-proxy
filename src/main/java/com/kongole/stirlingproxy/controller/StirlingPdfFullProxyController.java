@@ -27,7 +27,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/get") // This is your proxy's base URL
+@RequestMapping("/proxy-api") // This is your proxy's base URL
 public class StirlingPdfFullProxyController {
 
     private static final String STIRLING_PDF_URL = System.getenv("STIRLING_BASE_URL") != null
