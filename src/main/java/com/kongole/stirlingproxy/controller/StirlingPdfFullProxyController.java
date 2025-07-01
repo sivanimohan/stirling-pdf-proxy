@@ -1,6 +1,8 @@
 package com.kongole.stirlingproxy.controller;
 
 import com.kongole.stirlingproxy.util.MultipartInputStreamFileResource;
+import com.kongole.stirlingproxy.dto.BookmarkInfo; // Import your new DTO
+
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
@@ -11,8 +13,20 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+// PDFBox Imports
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDNamedDestination;
+// Potentially other destination types if you encounter them often:
+// import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitWidthDestination;
+
 
 @RestController
 @RequestMapping("/get") // This is your proxy's base URL
@@ -33,7 +47,7 @@ public class StirlingPdfFullProxyController {
     public ResponseEntity<byte[]> proxySingleFileUpload(
             @PathVariable String category,
             @PathVariable String action,
-            @RequestParam("fileInput") MultipartFile file) { // Changed @RequestParam("file") to @RequestParam("fileInput")
+            @RequestParam("fileInput") MultipartFile file) {
 
         String targetUrl = STIRLING_PDF_URL + "/api/v1/" + category + "/" + action;
         HttpHeaders headers = new HttpHeaders();
@@ -55,7 +69,7 @@ public class StirlingPdfFullProxyController {
             System.err.println("Error calling Stirling PDF API: " + e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode())
                     .body(e.getResponseBodyAsByteArray());
-        } catch (IOException e) { // Catch IOException specifically for file processing
+        } catch (IOException e) {
             System.err.println("Error reading file in proxySingleFileUpload: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error reading file: " + e.getMessage()).getBytes());
@@ -67,16 +81,11 @@ public class StirlingPdfFullProxyController {
     }
 
 
-    /**
-     * Corrected Path Variable Handling for your specific curl command structure
-     * Your curl is: /get/api/stirling/filter/filter-page-size/with-params
-     * This means the proxy path starts with /api/stirling and then the Stirling categories/actions
-     */
     @PostMapping(value = "/api/stirling/{stirlingCategory}/{stirlingAction}/with-params", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> proxyFileUploadWithParams(
             @PathVariable String stirlingCategory,
             @PathVariable String stirlingAction,
-            @RequestParam("fileInput") MultipartFile file, // Changed @RequestParam("file") to @RequestParam("fileInput")
+            @RequestParam("fileInput") MultipartFile file,
             @RequestParam Map<String, String> allRequestParams) {
 
         try {
@@ -86,11 +95,10 @@ public class StirlingPdfFullProxyController {
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
             headers.setAccept(Collections.singletonList(MediaType.ALL));
 
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            MultiValueMap<String, Object> body = new LinkedMultiMultiValueMap<>();
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
 
             allRequestParams.forEach((key, value) -> {
-                // Ensure you're not trying to re-add the 'fileInput' parameter if it's in allRequestParams
                 if (!key.equals("fileInput")) {
                     body.add(key, value);
                 }
@@ -169,7 +177,7 @@ public class StirlingPdfFullProxyController {
 
     @PostMapping(value = "/api/stirling/misc/extract-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> extractImagesProxy(
-            @RequestParam("fileInput") MultipartFile file, // Changed @RequestParam("file") to @RequestParam("fileInput")
+            @RequestParam("fileInput") MultipartFile file,
             @RequestParam(value = "imageFormat", required = false) String imageFormat) {
         try {
             String targetUrl = STIRLING_PDF_URL + "/api/v1/misc/extract-images";
@@ -208,7 +216,7 @@ public class StirlingPdfFullProxyController {
 
     @PostMapping(value = "/api/stirling/misc/extract-image-scans", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> extractImageScansProxy(
-            @RequestParam("fileInput") MultipartFile file, // Changed @RequestParam("file") to @RequestParam("fileInput")
+            @RequestParam("fileInput") MultipartFile file,
             @RequestParam(value = "angleThreshold", required = false) Double angleThreshold,
             @RequestParam(value = "tolerance", required = false) Double tolerance,
             @RequestParam(value = "minArea", required = false) Double minArea,
@@ -368,7 +376,6 @@ public class StirlingPdfFullProxyController {
         }
     }
 
-    // --- NEW METHOD FOR split-pdf-by-chapters ---
     @PostMapping(value = "/api/stirling/general/split-pdf-by-chapters", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> splitPdfByChaptersProxy(
             @RequestParam("fileInput") MultipartFile file,
@@ -379,7 +386,7 @@ public class StirlingPdfFullProxyController {
             String targetUrl = STIRLING_PDF_URL + "/api/v1/general/split-pdf-by-chapters";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM)); // ZIP file is typically application/octet-stream
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
@@ -406,6 +413,100 @@ public class StirlingPdfFullProxyController {
             System.err.println("Unexpected internal server error in splitPdfByChaptersProxy: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Internal server error in proxy: " + e.getMessage()).getBytes());
+        }
+    }
+
+    // --- NEW ENDPOINT FOR PDF BOOKMARK EXTRACTION ---
+    @PostMapping(value = "/pdf-info/bookmarks", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<BookmarkInfo>> getPdfBookmarks(
+            @RequestParam("pdfFile") MultipartFile file) { // Using "pdfFile" as the parameter name
+
+        List<BookmarkInfo> bookmarks = new ArrayList<>();
+        PDDocument document = null; // Initialize to null for finally block
+
+        try {
+            document = PDDocument.load(file.getInputStream());
+            PDDocumentOutline outline = document.getDocumentCatalog().getDocumentOutline();
+
+            if (outline != null) {
+                // Recursively process the outline items
+                processOutline(outline.getFirstChild(), bookmarks, document);
+            }
+
+            return ResponseEntity.ok(bookmarks);
+
+        } catch (IOException e) {
+            System.err.println("Error reading PDF file or during PDFBox processing: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Or return an error DTO
+        } catch (Exception e) {
+            // Catch any other unexpected exceptions
+            e.printStackTrace();
+            System.err.println("Unexpected internal server error during PDF bookmark extraction: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } finally {
+            if (document != null) {
+                try {
+                    document.close();
+                } catch (IOException e) {
+                    System.err.println("Error closing PDF document: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper method to recursively process PDOutlineItem and extract bookmark information.
+     * Converts 0-based PDFBox page index to 1-based page number.
+     * Handles different destination types to find the target page.
+     */
+    private void processOutline(PDOutlineItem item, List<BookmarkInfo> bookmarks, PDDocument document) throws IOException {
+        if (item == null) {
+            return;
+        }
+
+        int pageNumber = -1; // Default to -1 if page cannot be determined
+
+        // Determine the target page number
+        if (item.getDestination() instanceof PDPageDestination) {
+            PDPageDestination pageDest = (PDPageDestination) item.getDestination();
+            if (pageDest.getPage() != null) {
+                // Get 0-based page index from the PDPage object, then convert to 1-based
+                pageNumber = document.getPages().indexOf(pageDest.getPage()) + 1;
+            } else if (pageDest.getPageNumber() >= 0) {
+                // Fallback: If page object is null, but a 0-based page number is provided
+                pageNumber = pageDest.getPageNumber() + 1;
+            }
+        } else if (item.getDestination() instanceof PDNamedDestination) {
+            // Named destinations need to be resolved to a PDPageDestination
+            PDNamedDestination namedDest = (PDNamedDestination) item.getDestination();
+            PDPageDestination resolvedDest = document.getDocumentCatalog().findNamedDestinationPage(namedDest);
+            if (resolvedDest != null) {
+                 if (resolvedDest.getPage() != null) {
+                    pageNumber = document.getPages().indexOf(resolvedDest.getPage()) + 1;
+                } else if (resolvedDest.getPageNumber() >= 0) {
+                    pageNumber = resolvedDest.getPageNumber() + 1;
+                }
+            }
+        }
+        // You can add more 'else if' blocks here for other PDDestination subtypes if needed
+        // e.g., PDPageFitWidthDestination, PDPageXYZDestination if you encounter issues
+        // For most common PDFs, PDPageDestination and PDNamedDestination cover the majority.
+
+
+        // Add the bookmark if a valid page number was found
+        if (pageNumber != -1) {
+            bookmarks.add(new BookmarkInfo(item.getTitle(), pageNumber));
+        } else {
+            // Log if a bookmark destination couldn't be resolved, for debugging
+            System.err.println("Could not resolve page number for bookmark: " + item.getTitle());
+        }
+
+
+        // Recursively process children (sub-bookmarks)
+        PDOutlineItem child = item.getFirstChild();
+        while (child != null) {
+            processOutline(child, bookmarks, document);
+            child = child.getNextSibling();
         }
     }
 }
