@@ -44,8 +44,8 @@ public class StirlingPdfFullProxyController {
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         try {
-            // Changed "file" to "pdfFile" for single file uploads to match Stirling PDF's expected parameter
-            body.add("pdfFile", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+            // **CHANGED: "pdfFile" to "fileInput"**
+            body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
             ResponseEntity<byte[]> response = restTemplate.postForEntity(targetUrl, requestEntity, byte[].class);
@@ -90,13 +90,13 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.ALL));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // ** CRITICAL CHANGE: Changed "file" to "pdfFile" to match Stirling PDF API's expectation **
-            body.add("pdfFile", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+            // **CHANGED: "pdfFile" to "fileInput"**
+            body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             // If IOException occurs here, it will be caught by the outer catch block
 
             allRequestParams.forEach((key, value) -> {
-                // Ensure you're not trying to re-add the 'file' parameter if it's in allRequestParams
-                if (!key.equals("file") && !key.equals("pdfFile")) { // Added check for "pdfFile" too
+                // **ADJUSTED: Now excludes "file" (your proxy's param) and "fileInput" (Stirling's param)**
+                if (!key.equals("file") && !key.equals("fileInput")) {
                     body.add(key, value);
                 }
             });
@@ -188,8 +188,8 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // Changed "file" to "pdfFile" for single file uploads where Stirling PDF expects it
-            body.add("pdfFile", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+            // **CHANGED: "pdfFile" to "fileInput"**
+            body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             if (imageFormat != null) {
                 body.add("imageFormat", imageFormat);
             }
@@ -232,8 +232,8 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // Changed "file" to "pdfFile" for single file uploads where Stirling PDF expects it
-            body.add("pdfFile", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
+            // **CHANGED: "pdfFile" to "fileInput"**
+            body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             if (angleThreshold != null) body.add("angleThreshold", angleThreshold.toString());
             if (tolerance != null) body.add("tolerance", tolerance.toString());
             if (minArea != null) body.add("minArea", minArea.toString());
@@ -275,7 +275,6 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_PDF));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // This loop correctly uses "files" as the parameter name for multiple files, which is likely correct.
             for (MultipartFile file : files) {
                 body.add("files", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             }
@@ -316,7 +315,6 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_PDF));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // This loop correctly uses "files" as the parameter name for multiple files, which is likely correct.
             for (MultipartFile file : files) {
                 body.add("files", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             }
@@ -355,7 +353,6 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_PDF));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // This loop correctly uses "files" as the parameter name for multiple files, which is likely correct.
             for (MultipartFile file : files) {
                 body.add("files", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             }
