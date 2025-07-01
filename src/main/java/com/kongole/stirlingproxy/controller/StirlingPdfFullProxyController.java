@@ -95,7 +95,7 @@ public class StirlingPdfFullProxyController {
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
             headers.setAccept(Collections.singletonList(MediaType.ALL));
 
-            MultiValueMap<String, Object> body = new LinkedMultiMultiValueMap<>();
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>(); // Corrected from LinkedMultiMultiValueMap
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
 
             allRequestParams.forEach((key, value) -> {
@@ -417,7 +417,7 @@ public class StirlingPdfFullProxyController {
     }
 
     // --- NEW ENDPOINT FOR PDF BOOKMARK EXTRACTION ---
-    @PostMapping(value = "/pdf-info/bookmarks", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/pdf-info/extract-bookmarks", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<BookmarkInfo>> getPdfBookmarks(
             @RequestParam("pdfFile") MultipartFile file) { // Using "pdfFile" as the parameter name
 
@@ -481,7 +481,7 @@ public class StirlingPdfFullProxyController {
             PDNamedDestination namedDest = (PDNamedDestination) item.getDestination();
             PDPageDestination resolvedDest = document.getDocumentCatalog().findNamedDestinationPage(namedDest);
             if (resolvedDest != null) {
-                 if (resolvedDest.getPage() != null) {
+                if (resolvedDest.getPage() != null) {
                     pageNumber = document.getPages().indexOf(resolvedDest.getPage()) + 1;
                 } else if (resolvedDest.getPageNumber() >= 0) {
                     pageNumber = resolvedDest.getPageNumber() + 1;
