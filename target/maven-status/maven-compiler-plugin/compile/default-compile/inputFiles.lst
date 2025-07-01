@@ -1,4 +1,5 @@
 /home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/controller/StirlingPdfFullProxyController.java
+/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/util/MultipartInputStreamFileResource.java
 /home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/ProxyApp.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/controller/MultipartInputStreamFileResource.java
 /home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/config/CorsConfig.java
+/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/dto/BookmarkInfo.java
