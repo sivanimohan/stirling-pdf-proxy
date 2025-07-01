@@ -1,11 +1,11 @@
-package com.kongole.stirlingproxy.controller;
+package com.kongole.stirlingproxy.util;
 
 import org.springframework.core.io.InputStreamResource;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 public class MultipartInputStreamFileResource extends InputStreamResource {
+
     private final String filename;
 
     public MultipartInputStreamFileResource(InputStream inputStream, String filename) {
@@ -19,8 +19,7 @@ public class MultipartInputStreamFileResource extends InputStreamResource {
     }
 
     @Override
-    public long contentLength() throws IOException {
-        return -1; // We don't know the exact content length beforehand
+    public long contentLength() {
+        return -1;
     }
 }
-
