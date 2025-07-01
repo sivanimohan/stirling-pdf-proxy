@@ -1,5 +1,6 @@
 package com.kongole.stirlingproxy.controller;
 
+import com.kongole.stirlingproxy.util.MultipartInputStreamFileResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -13,14 +14,19 @@ import java.util.Collections;
 @RequestMapping("/get")
 public class StirlingPdfFullProxyController {
 
-    private static final String STIRLING_PDF_URL = "https://stirling-pdf-railway-poetic-courtesy.up.railway.app";
+    // Dynamically loaded from env via application.properties: stirling.base.url=${STIRLING_BASE_URL}
+    private final String STIRLING_PDF_URL = System.getenv().getOrDefault("STIRLING_BASE_URL",
+            "https://stirling-pdf-railway-poetic-courtesy.up.railway.app");
+
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Root proxy test endpoint
     @GetMapping("/")
     public String status() {
         return "✅ Stirling PDF Proxy is running!";
     }
 
+    // JSON POST proxy (e.g. /get/convert/pdf/text)
     @PostMapping("/{category}/{action}")
     public ResponseEntity<String> proxyPostJson(
             @PathVariable String category,
@@ -44,6 +50,7 @@ public class StirlingPdfFullProxyController {
         }
     }
 
+    // File upload POST proxy (e.g. /get/convert/pdf/word/upload)
     @PostMapping("/{category}/{action}/upload")
     public ResponseEntity<String> proxyFileUpload(
             @PathVariable String category,

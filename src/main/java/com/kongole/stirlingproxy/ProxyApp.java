@@ -9,4 +9,3 @@ public class ProxyApp {
         SpringApplication.run(ProxyApp.class, args);
     }
 }
-
