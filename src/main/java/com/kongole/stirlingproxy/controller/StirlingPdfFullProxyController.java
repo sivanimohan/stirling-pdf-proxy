@@ -29,13 +29,11 @@ public class StirlingPdfFullProxyController {
         return "✅ Stirling PDF Proxy is running!";
     }
 
-    // You need to ensure proxySingleFileUpload also has a guaranteed return path.
-    // Apply the same try-catch logic as below if it's currently causing issues.
     @PostMapping(value = "/{category}/{action}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> proxySingleFileUpload(
             @PathVariable String category,
             @PathVariable String action,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("fileInput") MultipartFile file) { // *** CHANGED: @RequestParam("file") to @RequestParam("fileInput") ***
 
         String targetUrl = STIRLING_PDF_URL + "/api/v1/" + category + "/" + action;
         HttpHeaders headers = new HttpHeaders();
@@ -44,7 +42,6 @@ public class StirlingPdfFullProxyController {
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         try {
-            // **CHANGED: "pdfFile" to "fileInput"**
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
@@ -58,7 +55,7 @@ public class StirlingPdfFullProxyController {
             System.err.println("Error calling Stirling PDF API: " + e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode())
                     .body(e.getResponseBodyAsByteArray());
-        } catch (IOException e) { // Catch IOException specifically for file processing
+        } catch (IOException e) {
             System.err.println("Error reading file in proxySingleFileUpload: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error reading file: " + e.getMessage()).getBytes());
@@ -79,10 +76,10 @@ public class StirlingPdfFullProxyController {
     public ResponseEntity<byte[]> proxyFileUploadWithParams(
             @PathVariable String stirlingCategory,
             @PathVariable String stirlingAction,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileInput") MultipartFile file, // *** CHANGED: @RequestParam("file") to @RequestParam("fileInput") ***
             @RequestParam Map<String, String> allRequestParams) {
 
-        try { // <<< --- Wrapped the entire logic in a single try-catch
+        try {
             String targetUrl = STIRLING_PDF_URL + "/api/v1/" + stirlingCategory + "/" + stirlingAction;
 
             HttpHeaders headers = new HttpHeaders();
@@ -90,13 +87,11 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.ALL));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // **CHANGED: "pdfFile" to "fileInput"**
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
-            // If IOException occurs here, it will be caught by the outer catch block
 
             allRequestParams.forEach((key, value) -> {
-                // **ADJUSTED: Now excludes "file" (your proxy's param) and "fileInput" (Stirling's param)**
-                if (!key.equals("file") && !key.equals("fileInput")) {
+                // Ensure you're not trying to re-add the 'fileInput' parameter if it's in allRequestParams
+                if (!key.equals("fileInput")) { // *** CHANGED: Exclusion logic now only checks for "fileInput" ***
                     body.add(key, value);
                 }
             });
@@ -109,27 +104,22 @@ public class StirlingPdfFullProxyController {
                     .contentType(response.getHeaders().getContentType() != null ? response.getHeaders().getContentType() : MediaType.APPLICATION_OCTET_STREAM)
                     .body(response.getBody());
 
-        } catch (IOException e) { // Specific catch for file reading issues
+        } catch (IOException e) {
             System.err.println("Error reading file or network issue during proxyFileUploadWithParams: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error reading file or network issue: " + e.getMessage()).getBytes());
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            // Log the error for debugging on your server
             System.err.println("Error calling Stirling PDF API: " + e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode())
                     .body(e.getResponseBodyAsByteArray());
         } catch (Exception e) {
-            // Catch any other unexpected exceptions
-            e.printStackTrace(); // Print full stack trace for unexpected errors
+            e.printStackTrace();
             System.err.println("Unexpected internal server error in proxyFileUploadWithParams: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Internal server error in proxy: " + e.getMessage()).getBytes());
         }
     }
 
-
-    // Make sure to apply similar robust try-catch blocks to ALL other proxy methods
-    // (urlToPdfProxy, extractImagesProxy, etc.) to ensure a return statement is always reached.
 
     @PostMapping(value = "/api/stirling/convert/url/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> urlToPdfProxy(
@@ -179,7 +169,7 @@ public class StirlingPdfFullProxyController {
 
     @PostMapping(value = "/api/stirling/misc/extract-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> extractImagesProxy(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileInput") MultipartFile file, // *** CHANGED: @RequestParam("file") to @RequestParam("fileInput") ***
             @RequestParam(value = "imageFormat", required = false) String imageFormat) {
         try {
             String targetUrl = STIRLING_PDF_URL + "/api/v1/misc/extract-images";
@@ -188,7 +178,6 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // **CHANGED: "pdfFile" to "fileInput"**
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             if (imageFormat != null) {
                 body.add("imageFormat", imageFormat);
@@ -219,7 +208,7 @@ public class StirlingPdfFullProxyController {
 
     @PostMapping(value = "/api/stirling/misc/extract-image-scans", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> extractImageScansProxy(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileInput") MultipartFile file, // *** CHANGED: @RequestParam("file") to @RequestParam("fileInput") ***
             @RequestParam(value = "angleThreshold", required = false) Double angleThreshold,
             @RequestParam(value = "tolerance", required = false) Double tolerance,
             @RequestParam(value = "minArea", required = false) Double minArea,
@@ -232,7 +221,6 @@ public class StirlingPdfFullProxyController {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // **CHANGED: "pdfFile" to "fileInput"**
             body.add("fileInput", new MultipartInputStreamFileResource(file.getInputStream(), file.getOriginalFilename()));
             if (angleThreshold != null) body.add("angleThreshold", angleThreshold.toString());
             if (tolerance != null) body.add("tolerance", tolerance.toString());
