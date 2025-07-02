@@ -3,4 +3,5 @@ com/kongole/stirlingproxy/dto/BookmarkInfo.class
 com/kongole/stirlingproxy/util/MultipartInputStreamFileResource.class
 com/kongole/stirlingproxy/config/CorsConfig$1.class
 com/kongole/stirlingproxy/config/CorsConfig.class
+com/kongole/stirlingproxy/controller/PdfInfoController.class
 com/kongole/stirlingproxy/ProxyApp.class
