@@ -44,7 +44,7 @@
     <dependency>
       <groupId>org.apache.pdfbox</groupId>
       <artifactId>pdfbox</artifactId>
-      <version>${pdfbox.version}</version> <!-- Using the property here -->
+      <version>2.0.31</version> <!-- Using the property here -->
     </dependency>
 
     <dependency>
