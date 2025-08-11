@@ -1,6 +1,7 @@
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/controller/StirlingPdfFullProxyController.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/util/MultipartInputStreamFileResource.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/ProxyApp.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/config/CorsConfig.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/dto/BookmarkInfo.java
-/home/festus-kiprotich/stirling-pdf-proxy/src/main/java/com/kongole/stirlingproxy/controller/PdfInfoController.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\controller\PdfInfoController.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\controller\StirlingPdfFullProxyController.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\config\CorsConfig.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\dto\BookmarkInfo.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\service\PdfHeadingDetectionService.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\util\MultipartInputStreamFileResource.java
+C:\Users\Sivani\Desktop\New folder\book\stirling-pdf-proxy\src\main\java\com\kongole\stirlingproxy\ProxyApp.java

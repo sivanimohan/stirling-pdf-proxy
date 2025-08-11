@@ -1,7 +1,7 @@
+
 package com.kongole.stirlingproxy.controller;
 
 import com.kongole.stirlingproxy.util.MultipartInputStreamFileResource;
-import com.kongole.stirlingproxy.dto.BookmarkInfo; // Import your new DTO
 
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +13,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.Collections;
-import java.util.List;
+
 import java.util.Map;
 
 // PDFBox Imports (these can now be removed if no other method uses them in this class)
