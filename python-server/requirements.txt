@@ -1,6 +1,0 @@
-
-fastapi
-uvicorn
-requests
-google-generativeai
-PyPDF2
